@@ -45,6 +45,28 @@ async function cardBalance(req: Request, res: Response){
     res.status(200).send(balanceData);
 }
 
+async function cardRecharge(req: Request, res: Response){
+    const apiKey = req.headers['x-api-key'];
+    const { cardId, amount } = req.body;
+
+    if(!apiKey){
+        throw ("chave de api não informada")
+    }
+
+    if (!cardId || !amount) {
+        throw ("revise os dados enviados");
+    }
+
+    if (Number(amount) === 0) {
+        throw ("o valor da recarga deve ser maior que zero");
+    }
+
+    await cardService.cardRecharge(apiKey.toString(), cardId, amount);
+
+    res.sendStatus(200);
+}
+
+
 function validateCardType(cardType: TransactionTypes) {
     const cardTypes: string[] = ['groceries', 'restaurant', 'transport', 'education', 'health'];
     if (!cardTypes.includes(cardType.toLowerCase())) {
@@ -55,5 +77,6 @@ function validateCardType(cardType: TransactionTypes) {
 export {
     createCard,
     activateCard,
-    cardBalance
+    cardBalance,
+    cardRecharge
 }

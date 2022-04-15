@@ -98,6 +98,24 @@ async function cardBalance(cardId: number) {
     return balanceData;
 }
 
+async function cardRecharge(apiKey: string, cardId: number, amount: number) {
+    const key =  await findByApiKey(apiKey);
+    if(!key){
+        throw ("chave de api não encontrada")
+    }
+
+    const card = await cardRepository.findById(cardId);
+    if(!card){
+        throw ("cartão não encontrado")
+    }
+
+    const isExpirationDateValid = validateExpirationDate(card.expirationDate);
+    if(!isExpirationDateValid){
+        throw ("cartão fora da data de validade")
+    }
+
+    await rechargeRepository.insert({ cardId, amount });
+}
 
 
 function createCardHolderName(employeeName: string) {
@@ -159,5 +177,6 @@ function amount(movements: any) {
 export {
     createCard,
     activateCard,
-    cardBalance
+    cardBalance,
+    cardRecharge
 }
