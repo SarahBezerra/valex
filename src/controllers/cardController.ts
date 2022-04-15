@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { validateCard } from '../services/cardService.js'
+import * as cardService from '../services/cardService.js'
 import { TransactionTypes } from '../repositories/cardRepository.js';
 
 async function createCard(req: Request, res: Response){
@@ -16,7 +16,19 @@ async function createCard(req: Request, res: Response){
 
     validateCardType(cardType);
 
-    await validateCard(apiKey.toString(), employeeId, cardType);
+    await cardService.createCard(apiKey.toString(), employeeId, cardType);
+
+    res.sendStatus(201)
+}
+
+async function activateCard(req: Request, res: Response){
+    const { cardId, cvv, password } = req.body;
+
+    if (!cardId || !cvv || !password) {
+        throw ("revise os dados enviados");
+    }
+
+    await cardService.activateCard(Number(cardId), cvv, password);
 
     res.sendStatus(201)
 }
@@ -25,10 +37,11 @@ async function createCard(req: Request, res: Response){
 function validateCardType(cardType: TransactionTypes) {
     const cardTypes: string[] = ['groceries', 'restaurant', 'transport', 'education', 'health'];
     if (!cardTypes.includes(cardType.toLowerCase())) {
-        throw ("Tido de cartão inválido");
+        throw ("tipo de cartão inválido");
     }
 }
 
 export {
-    createCard
+    createCard,
+    activateCard
 }

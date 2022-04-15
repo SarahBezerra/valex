@@ -1,12 +1,12 @@
 import { findByApiKey } from "../repositories/companyRepository.js";
 import * as employeeRepository from '../repositories/employeeRepository.js';
 import * as cardRepository from '../repositories/cardRepository.js';
-import { TransactionTypes, CardInsertData } from '../repositories/cardRepository.js';
+import { TransactionTypes, CardInsertData, CardUpdateData } from '../repositories/cardRepository.js';
 import { faker } from '@faker-js/faker';
 import dayjs from "dayjs";
 import bcrypt from 'bcrypt';
 
-async function validateCard(apiKey: string, employeeId: number, type: TransactionTypes) {
+async function createCard(apiKey: string, employeeId: number, type: TransactionTypes) {
     const key =  await findByApiKey(apiKey);
     if(!key){
         throw ("chave de api não encontrada")
@@ -26,7 +26,7 @@ async function validateCard(apiKey: string, employeeId: number, type: Transactio
 
     const cardholderName: string =  createCardHolderName(employee.fullName);
 
-    const expirationDate:string = dayjs().add(5, 'year').format('MM/YYYY');
+    const expirationDate:string = dayjs().add(5, 'year').format('MM/YY');
 
     const securityCode = bcrypt.hashSync((faker.finance.creditCardCVV()), 10);
 
@@ -36,7 +36,7 @@ async function validateCard(apiKey: string, employeeId: number, type: Transactio
         cardholderName,
         securityCode,
         expirationDate,
-        password: "",
+        password: null,
         isVirtual: false,
         originalCardId: null,
         isBlocked: false,
@@ -44,6 +44,34 @@ async function validateCard(apiKey: string, employeeId: number, type: Transactio
     };
 
     await cardRepository.insert(cardData);
+}
+
+async function activateCard(cardId: number, cvv: string, password: string) {
+    const card = await cardRepository.findById(cardId);
+    if(!card){
+        throw ("cartão não encontrado")
+    }
+
+    const isExpirationDateValid = validateExpirationDate(card.expirationDate);
+    if(!isExpirationDateValid){
+        throw ("cartão fora da data de validade")
+    }
+
+    if(card.password){
+        throw ("cartão já ativado")
+    }
+
+    if(!(bcrypt.compareSync(cvv, card.securityCode))){
+        throw ("CVV incorreto")
+    }
+
+    validatePassword(password);
+    const encryptedPassword = bcrypt.hashSync(password, 10);
+
+    const cardData: CardUpdateData = {
+        password: encryptedPassword
+    }
+    await cardRepository.update(cardId, cardData)
 }
 
 
@@ -64,6 +92,36 @@ function createCardHolderName(employeeName: string) {
     return cardHolderName.toUpperCase();
 }
 
+function validateExpirationDate(date: string) {
+    var currentDate = dayjs().format('MM/YY').split("/");
+    var expirationDate = date.split("/");
+
+    if (currentDate[1] < expirationDate[1]) {
+        return true;
+    } else if (currentDate[1] === expirationDate[1]) {
+        if (currentDate[0] <= expirationDate[0]) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+function validatePassword(password: string){
+    if(password.length !== 4){
+        throw ("senha deve contar 4 dígitos numéricos")
+    }
+
+    const numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+
+    for(let i=0; i<password.length; i++){
+        if(!numbers.includes(password[i])){
+            throw ("senha deve conter apenas números")
+        }
+    }
+}
+
 export {
-    validateCard
+    createCard,
+    activateCard
 }
