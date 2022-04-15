@@ -2,6 +2,8 @@ import { findByApiKey } from "../repositories/companyRepository.js";
 import * as employeeRepository from '../repositories/employeeRepository.js';
 import * as cardRepository from '../repositories/cardRepository.js';
 import { TransactionTypes, CardInsertData, CardUpdateData } from '../repositories/cardRepository.js';
+import * as rechargeRepository from "../repositories/rechargeRepository.js";
+import * as paymentRepository from "../repositories/paymentRepository.js";
 import { faker } from '@faker-js/faker';
 import dayjs from "dayjs";
 import bcrypt from 'bcrypt';
@@ -74,6 +76,29 @@ async function activateCard(cardId: number, cvv: string, password: string) {
     await cardRepository.update(cardId, cardData)
 }
 
+async function cardBalance(cardId: number) {
+    const card = await cardRepository.findById(cardId);
+    if(!card){
+        throw ("cartão não encontrado")
+    }
+
+    const transactions = await paymentRepository.findByCardId(cardId);
+    const recharges = await rechargeRepository.findByCardId(cardId);
+
+    const rechargesSum = amount(recharges)
+    const transactionsSum = amount(transactions)
+    const balance = rechargesSum - transactionsSum;
+
+    const balanceData = {
+        balance,
+        transactions,
+        recharges
+    }
+
+    return balanceData;
+}
+
+
 
 function createCardHolderName(employeeName: string) {
     const name = employeeName.split(" ");
@@ -121,7 +146,18 @@ function validatePassword(password: string){
     }
 }
 
+function amount(movements: any) {
+    let balance = 0;
+    movements.map(movement => {
+        return balance += movement.amount
+    });
+
+    return balance;
+}
+
+
 export {
     createCard,
-    activateCard
+    activateCard,
+    cardBalance
 }

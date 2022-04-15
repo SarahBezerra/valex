@@ -28,11 +28,22 @@ async function activateCard(req: Request, res: Response){
         throw ("revise os dados enviados");
     }
 
-    await cardService.activateCard(Number(cardId), cvv, password);
+    await cardService.activateCard(cardId, cvv, password);
 
     res.sendStatus(201)
 }
 
+async function cardBalance(req: Request, res: Response){
+    const { cardId } = req.body;
+
+    if (!cardId) {
+        throw ("envie o identificador do cartão");
+    }
+
+    const balanceData = await cardService.cardBalance(cardId);
+
+    res.status(200).send(balanceData);
+}
 
 function validateCardType(cardType: TransactionTypes) {
     const cardTypes: string[] = ['groceries', 'restaurant', 'transport', 'education', 'health'];
@@ -43,5 +54,6 @@ function validateCardType(cardType: TransactionTypes) {
 
 export {
     createCard,
-    activateCard
+    activateCard,
+    cardBalance
 }
