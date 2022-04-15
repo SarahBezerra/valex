@@ -1,30 +1,29 @@
 import { Request, Response } from 'express';
-import * as cardService from '../services/cardService.js'
+import { validateCard } from '../services/cardService.js'
+import { TransactionTypes } from '../repositories/cardRepository.js';
 
 async function createCard(req: Request, res: Response){
     const apiKey = req.headers['x-api-key'];
-    await validateApiKey(apiKey)
-
     const { employeeId, cardType } = req.body;
-    validateCard(employeeId, cardType);
 
-    res.sendStatus(201)
-}
-
-async function validateApiKey(apiKey: string | string[]) {
     if(!apiKey){
         throw ("chave de api não informada")
     }
 
-    await cardService.validateApiKey(apiKey.toString())
-}
-
-function validateCard(employeeId: string, cardType: string) {
     if (!employeeId || !cardType) {
         throw ("revise os dados enviados");
     }
 
-    const cardTypes: string[] = ['groceries', 'restaurants', 'transport', 'education', 'health'];
+    validateCardType(cardType);
+
+    await validateCard(apiKey.toString(), employeeId, cardType);
+
+    res.sendStatus(201)
+}
+
+
+function validateCardType(cardType: TransactionTypes) {
+    const cardTypes: string[] = ['groceries', 'restaurant', 'transport', 'education', 'health'];
     if (!cardTypes.includes(cardType.toLowerCase())) {
         throw ("Tido de cartão inválido");
     }
