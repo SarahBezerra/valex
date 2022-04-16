@@ -135,7 +135,7 @@ function createCardHolderName(employeeName: string) {
     return cardHolderName.toUpperCase();
 }
 
-function validateExpirationDate(date: string) {
+export function validateExpirationDate(date: string) {
     var currentDate = dayjs().format('MM/YY').split("/");
     var expirationDate = date.split("/");
 
@@ -164,7 +164,7 @@ function validatePassword(password: string){
     }
 }
 
-function amount(movements: any) {
+export function amount(movements: any) {
     let balance = 0;
     movements.map(movement => {
         return balance += movement.amount
