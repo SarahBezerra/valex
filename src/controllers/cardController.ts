@@ -30,7 +30,7 @@ async function activateCard(req: Request, res: Response){
 
     await cardService.activateCard(cardId, cvv, password);
 
-    res.sendStatus(201)
+    res.sendStatus(200)
 }
 
 async function cardBalance(req: Request, res: Response){

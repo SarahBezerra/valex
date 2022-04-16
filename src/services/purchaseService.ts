@@ -1,20 +1,12 @@
-import * as cardRepository from '../repositories/cardRepository.js';
-import { validateExpirationDate, amount } from './cardService.js';
+import * as cardService from './cardService.js';
 import * as businessRepository from '../repositories/businessRepository.js';
-import * as rechargeRepository from '../repositories/rechargeRepository.js';
 import * as paymentRepository from '../repositories/paymentRepository.js';
 import bcrypt from 'bcrypt';
 
 async function purchase(cardId: number, businessId: number, password: string, price: number){
-    const card = await cardRepository.findById(cardId);
-    if(!card){
-        throw ("cartão não encontrado")
-    }
+    const card = await cardService.validateCardId(cardId);
 
-    const isExpirationDateValid = validateExpirationDate(card.expirationDate);
-    if(!isExpirationDateValid){
-        throw ("cartão fora da data de validade")
-    }
+    cardService.validateExpirationDate(card.expirationDate);
 
     if(card.password === null){
         throw ("ative esse cartão para começar a comprar")
@@ -33,12 +25,7 @@ async function purchase(cardId: number, businessId: number, password: string, pr
         throw ("tipo do cartão não compatível com este estabelecimento")
     }
 
-    const transactions = await paymentRepository.findByCardId(cardId);
-    const recharges = await rechargeRepository.findByCardId(cardId);
-
-    const rechargesSum = amount(recharges)
-    const transactionsSum = amount(transactions)
-    const balance = rechargesSum - transactionsSum;
+    const { balance } = await cardService.cardBalance(cardId);
     if(price > balance){
         throw ("saldo insuficiente")
     }
