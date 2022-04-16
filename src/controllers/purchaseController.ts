@@ -4,10 +4,6 @@ import * as purchaseService from '../services/purchaseService.js';
 async function purchase(req: Request, res: Response){
     const { cardId, businessId, password, price } = req.body;
 
-    if(!cardId || !businessId || !password || !price){
-        throw ("revise os dados enviados")
-    }
-
     if(Number(price) === 0){
         throw ("a compra deve ser maior do que R$ 0,00")
     }
