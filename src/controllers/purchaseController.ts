@@ -2,13 +2,18 @@ import { Request, Response } from 'express';
 import * as purchaseService from '../services/purchaseService.js';
 
 async function purchase(req: Request, res: Response){
-    const { cardId, businessId, password, price } = req.body;
+    const { id } = req.params;
+    const { businessId, password, price } = req.body;
 
-    if(Number(price) === 0){
-        throw ("a compra deve ser maior do que R$ 0,00")
+    if(!id || !businessId || !password || !price){
+        throw { type: 'bad_request', message: 'revise os dados enviados' }
     }
 
-    await purchaseService.purchase(cardId, businessId, password, price);
+    if(Number(price) === 0){
+        throw { type: 'bad_request', message: 'a compra deve ser maior do que R$ 0,00' }
+    }
+
+    await purchaseService.purchase(Number(id), businessId, password, price);
 
     res.sendStatus(200);
 }

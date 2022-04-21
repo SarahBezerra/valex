@@ -13,12 +13,12 @@ async function createCard(apiKey: string, employeeId: number, type: TransactionT
 
     const employee = await employeeRepository.findById(employeeId)
     if(!employee){
-        throw ("fucionario não cadastrado")
+        throw { type: 'bad_request', message: 'funcionário não encontrado' }
     }
 
     const cardTypeExists = await cardRepository.findByTypeAndEmployeeId(type, employeeId)
     if(cardTypeExists){
-        throw ("funcionário já possui esse tipo de cartão")
+        throw { type: 'conflict', message: 'funcionário já possui esse tipo de cartão' }
     }
 
     const cardData = generateCardData(employeeId, employee, type);
@@ -32,11 +32,11 @@ async function activateCard(cardId: number, cvv: string, password: string) {
     validateExpirationDate(card.expirationDate);
 
     if(card.password){
-        throw ("cartão já ativado")
+        throw { type: 'bad_request', message: 'cartão já ativado' }
     }
 
     if(!(bcrypt.compareSync(cvv, card.securityCode))){
-        throw ("CVV incorreto")
+        throw { type: 'unauthorized', message: 'CVV incorreto' }
     }
 
     validatePassword(password);
@@ -81,7 +81,7 @@ async function cardRecharge(apiKey: string, cardId: number, amount: number) {
 async function validateApiKey(apiKey: string) {
     const key = await findByApiKey(apiKey);
     if (!key) {
-        throw ("chave de api não encontrada");
+        throw { type: 'unauthorized', message: 'chave inválida' }
     }
 }
 
@@ -92,7 +92,9 @@ function generateCardData(employeeId: number, employee: any, type: TransactionTy
 
     const expirationDate:string = dayjs().add(5, 'year').format('MM/YY');
 
-    const securityCode = bcrypt.hashSync((faker.finance.creditCardCVV()), 10);
+    const cvv = faker.finance.creditCardCVV();
+    console.log(cvv);
+    const securityCode = bcrypt.hashSync(cvv, 10);
 
     const cardData: CardInsertData = {
         employeeId,
@@ -113,7 +115,7 @@ function generateCardData(employeeId: number, employee: any, type: TransactionTy
 async function validateCardId(cardId: number){
     const card = await cardRepository.findById(cardId);
     if(!card){
-        throw ("cartão não encontrado")
+        throw { type: 'not_found', message: 'cartão não encontrado' }
     }
 
     return card;
@@ -151,20 +153,20 @@ function validateExpirationDate(date: string) {
     }
 
     if(!isExpirationDateValid){
-        throw ("cartão fora da data de validade")
+        throw { type: 'unauthorized', message: 'cartão fora da data de validade' }
     }
 }
 
 function validatePassword(password: string){
     if(password.length !== 4){
-        throw ("senha deve contar 4 dígitos numéricos")
+        throw { type: 'bad_request', message: 'senha deve conter 4 dígitos numéricos' }
     }
 
     const numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 
     for(let i=0; i<password.length; i++){
         if(!numbers.includes(password[i])){
-            throw ("senha deve conter apenas números")
+            throw { type: 'bad_request', message: 'senha deve conter apenas números' }
         }
     }
 }

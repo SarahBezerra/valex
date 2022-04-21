@@ -5,6 +5,6 @@ import purchaseSchema from '../schemas/purchaseSchema.js';
 
 const purchaseRouter = Router();
 
-purchaseRouter.post("/purchase", validateSchemaMiddleware(purchaseSchema), purchaseController.purchase)
+purchaseRouter.post("/cards/:id/purchase", validateSchemaMiddleware(purchaseSchema), purchaseController.purchase)
 
 export default purchaseRouter;

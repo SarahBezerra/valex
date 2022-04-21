@@ -9,25 +9,25 @@ async function purchase(cardId: number, businessId: number, password: string, pr
     cardService.validateExpirationDate(card.expirationDate);
 
     if(card.password === null){
-        throw ("ative esse cartão para começar a comprar")
+        throw { type: 'bad_request', message: 'ative esse cartão para começar a comprar' }
     }    
 
     if(!(bcrypt.compareSync(password, card.password))){
-        throw ("senha incorreta")
+        throw { type: 'unauthorized', message: 'senha incorreta' }
     }
 
     const business = await businessRepository.findById(businessId);
     if(!business){
-        throw ("estabelecimento não cadastrado")
+        throw { type: 'not_found', message: 'estabelecimento não cadastrado' }
     }
 
     if(business.type !== card.type){
-        throw ("tipo do cartão não compatível com este estabelecimento")
+        throw { type: 'bad_request', message: 'tipo do cartão não compatível com este estabelecimento' }
     }
 
     const { balance } = await cardService.cardBalance(cardId);
     if(price > balance){
-        throw ("saldo insuficiente")
+        throw { type: 'bad_request', message: 'saldo insuficiente' }
     }
 
     await paymentRepository.insert({ cardId, businessId, amount: price });
