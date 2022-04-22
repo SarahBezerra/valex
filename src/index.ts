@@ -13,5 +13,5 @@ app.use(router);
 app.use(errorHandlerMiddleware);
 
 app.listen(process.env.PORT || 5000, () => {
-    console.log(`runnig in port ${process.env.PORT || 5000}`)
-})
+    console.log(`Server running on port ${process.env.PORT || 5000}`)
+});
